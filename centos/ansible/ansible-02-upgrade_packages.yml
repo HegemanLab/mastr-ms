@@ -1,0 +1,29 @@
+---
+- hosts: centos-init
+  remote_user: mae
+
+  tasks:
+  - name: upgrade everything
+    yum:
+      name: '*'
+      state: latest
+    become: yes
+
+  - name: install vim
+    yum:
+      name: vim
+      state: latest
+    become: yes
+
+  - name: install git
+    yum:
+      name: git
+      state: latest
+    become: yes
+
+  - name: install nmap
+    yum:
+      name: nmap
+      state: latest
+    become: yes
+

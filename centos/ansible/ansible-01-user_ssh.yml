@@ -1,0 +1,64 @@
+---
+- hosts: centos-init
+  remote_user: mae
+  vars:
+    uuser: mae
+    security_ssh_port: "22"
+    security_ssh_protocol: "2"
+    security_ssh_password_authentication: "no"
+    security_ssh_permit_root_login: "no"
+    security_ssh_usedns: "no"
+    security_ssh_permit_empty_password: "no"
+    security_ssh_challenge_response_auth: "no"
+    security_ssh_gss_api_authentication: "no"
+    security_ssh_x11_forwarding: "no"
+    pubkey_authentication: "yes"
+
+  tasks:
+  - name: set authorized keys
+    authorized_key:
+      user: "{{uuser}}"
+      state: present
+      key: "{{ lookup('file', 'keys.pub') }}"
+
+  - name: secure ssh configuration
+    lineinfile:
+      dest: "/etc/ssh/sshd_config"
+      regexp: "{{ item.regexp }}"
+      line: "{{ item.line }}"
+      state: present
+    with_items:
+      - regexp: "^Protocol"
+        line:   "Protocol {{ security_ssh_protocol }}"
+      - regexp: "^PasswordAuthentication"
+        line:   "PasswordAuthentication {{ security_ssh_password_authentication }}"
+      - regexp: "^PermitRootLogin"
+        line:   "PermitRootLogin {{ security_ssh_permit_root_login }}"
+      - regexp: "^Port"
+        line:   "Port {{ security_ssh_port }}"
+      - regexp: "^UseDNS"
+        line:   "UseDNS {{ security_ssh_usedns }}"
+      - regexp: "^PermitEmptyPasswords"
+        line:   "PermitEmptyPasswords {{ security_ssh_permit_empty_password }}"
+      - regexp: "^ChallengeResponseAuthentication"
+        line:   "ChallengeResponseAuthentication {{ security_ssh_challenge_response_auth }}"
+      - regexp: "^GSSAPIAuthentication"
+        line:   "GSSAPIAuthentication {{ security_ssh_gss_api_authentication }}"
+      - regexp: "^X11Forwarding"
+        line:   "X11Forwarding {{ security_ssh_x11_forwarding }}"
+      - regexp: "^PubkeyAuthentication"
+        line:   "PubkeyAuthentication {{ pubkey_authentication }}"
+    become: yes
+
+  - name: enable sshd
+    systemd:
+      name: sshd
+      enabled: yes
+    become: yes
+
+  - name: restart sshd
+    systemd: 
+      state: restarted
+      daemon_reload: yes
+      name: sshd
+    become: yes
